@@ -133,9 +133,14 @@ export function generateFullCustomerStatement(data: CustomerStatementData): jsPD
     body: summaryData,
     theme: 'striped',
     headStyles: { fillColor: [41, 128, 185] },
+    styles: {
+      cellPadding: 4,
+      overflow: 'linebreak',
+      valign: 'middle'
+    },
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 100 },
-      1: { halign: 'right', fontStyle: 'bold' },
+      0: { fontStyle: 'bold', cellWidth: 100, valign: 'middle' },
+      1: { halign: 'right', fontStyle: 'bold', cellWidth: 'auto', cellPadding: { right: 5 }, valign: 'middle' },
     },
     didParseCell: function(data: any) {
       if (data.row.index === summaryData.length - 1) {
@@ -171,11 +176,20 @@ export function generateFullCustomerStatement(data: CustomerStatementData): jsPD
       body: orderRows,
       theme: 'striped',
       headStyles: { fillColor: [41, 128, 185] },
-      styles: { fontSize: 9 },
+      styles: {
+        fontSize: 9,
+        cellPadding: 4,
+        overflow: 'linebreak',
+        valign: 'middle'
+      },
       columnStyles: {
-        3: { halign: 'right' },
-        4: { halign: 'right' },
-        5: { halign: 'right' },
+        0: { valign: 'middle' },
+        1: { valign: 'middle' },
+        2: { halign: 'center', valign: 'middle' },
+        3: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+        4: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+        5: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+        6: { valign: 'middle' },
       },
     });
 
@@ -204,9 +218,19 @@ export function generateFullCustomerStatement(data: CustomerStatementData): jsPD
       body: paymentRows,
       theme: 'striped',
       headStyles: { fillColor: [39, 174, 96] },
-      styles: { fontSize: 9 },
+      styles: {
+        fontSize: 9,
+        cellPadding: 4,
+        overflow: 'linebreak',
+        valign: 'middle'
+      },
       columnStyles: {
-        3: { halign: 'right' },
+        0: { valign: 'middle' },
+        1: { valign: 'middle' },
+        2: { valign: 'middle' },
+        3: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+        4: { valign: 'middle' },
+        5: { valign: 'middle' },
       },
     });
   }
@@ -266,9 +290,14 @@ export function generateDateRangeStatement(data: CustomerStatementData): jsPDF {
     head: [],
     body: summaryData,
     theme: 'striped',
+    styles: {
+      cellPadding: 4,
+      overflow: 'linebreak',
+      valign: 'middle'
+    },
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 120 },
-      1: { halign: 'right', fontStyle: 'bold' },
+      0: { fontStyle: 'bold', cellWidth: 120, valign: 'middle' },
+      1: { halign: 'right', fontStyle: 'bold', cellWidth: 'auto', cellPadding: { right: 5 }, valign: 'middle' },
     },
     didParseCell: function(data: any) {
       if (data.row.index === summaryData.length - 1) {
@@ -304,11 +333,20 @@ export function generateDateRangeStatement(data: CustomerStatementData): jsPDF {
       body: orderRows,
       theme: 'striped',
       headStyles: { fillColor: [41, 128, 185] },
-      styles: { fontSize: 9 },
+      styles: {
+        fontSize: 9,
+        cellPadding: 4,
+        overflow: 'linebreak',
+        valign: 'middle'
+      },
       columnStyles: {
-        3: { halign: 'right' },
-        4: { halign: 'right' },
-        5: { halign: 'right' },
+        0: { valign: 'middle' },
+        1: { valign: 'middle' },
+        2: { halign: 'center', valign: 'middle' },
+        3: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+        4: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+        5: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+        6: { valign: 'middle' },
       },
     });
 
@@ -342,9 +380,19 @@ export function generateDateRangeStatement(data: CustomerStatementData): jsPDF {
       body: paymentRows,
       theme: 'striped',
       headStyles: { fillColor: [39, 174, 96] },
-      styles: { fontSize: 9 },
+      styles: {
+        fontSize: 9,
+        cellPadding: 4,
+        overflow: 'linebreak',
+        valign: 'middle'
+      },
       columnStyles: {
-        3: { halign: 'right' },
+        0: { valign: 'middle' },
+        1: { valign: 'middle' },
+        2: { valign: 'middle' },
+        3: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+        4: { valign: 'middle' },
+        5: { valign: 'middle' },
       },
     });
   } else {
@@ -408,10 +456,17 @@ export function generateOrderInvoice(order: any, customer: any): jsPDF {
     body: itemRows,
     theme: 'striped',
     headStyles: { fillColor: [41, 128, 185] },
+    styles: {
+      cellPadding: 4,
+      overflow: 'linebreak',
+      valign: 'middle'
+    },
     columnStyles: {
-      1: { halign: 'center' },
-      3: { halign: 'right' },
-      4: { halign: 'right' },
+      0: { valign: 'middle' },
+      1: { halign: 'center', valign: 'middle' },
+      2: { valign: 'middle' },
+      3: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+      4: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
     },
   });
 
@@ -497,9 +552,14 @@ export function generateInventoryReport(data: InventoryReportData): jsPDF {
     body: statsData,
     theme: 'striped',
     tableWidth: 100,
+    styles: {
+      cellPadding: 4,
+      overflow: 'linebreak',
+      valign: 'middle'
+    },
     columnStyles: {
-      0: { fontStyle: 'bold' },
-      1: { halign: 'right' },
+      0: { fontStyle: 'bold', valign: 'middle' },
+      1: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
     },
   });
 
@@ -529,11 +589,22 @@ export function generateInventoryReport(data: InventoryReportData): jsPDF {
     body: itemRows,
     theme: 'striped',
     headStyles: { fillColor: [41, 128, 185] },
-    styles: { fontSize: 8 },
+    styles: {
+      fontSize: 8,
+      cellPadding: 4,
+      overflow: 'linebreak',
+      valign: 'middle'
+    },
     columnStyles: {
-      3: { halign: 'center' },
-      5: { halign: 'right' },
-      6: { halign: 'right' },
+      0: { valign: 'middle' },
+      1: { valign: 'middle' },
+      2: { valign: 'middle' },
+      3: { halign: 'center', valign: 'middle' },
+      4: { valign: 'middle' },
+      5: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+      6: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+      7: { valign: 'middle' },
+      8: { valign: 'middle' },
     },
   });
 
@@ -591,9 +662,14 @@ export function generateExpenseReport(data: ExpenseReportData): jsPDF {
     head: [],
     body: statsData,
     theme: 'striped',
+    styles: {
+      cellPadding: 4,
+      overflow: 'linebreak',
+      valign: 'middle'
+    },
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 100 },
-      1: { halign: 'right' },
+      0: { fontStyle: 'bold', cellWidth: 100, valign: 'middle' },
+      1: { halign: 'right', cellWidth: 'auto', cellPadding: { right: 5 }, valign: 'middle' },
     },
   });
 
@@ -618,9 +694,15 @@ export function generateExpenseReport(data: ExpenseReportData): jsPDF {
       body: categoryRows,
       theme: 'striped',
       headStyles: { fillColor: [155, 89, 182] },
+      styles: {
+        cellPadding: 4,
+        overflow: 'linebreak',
+        valign: 'middle'
+      },
       columnStyles: {
-        1: { halign: 'center' },
-        2: { halign: 'right' },
+        0: { valign: 'middle' },
+        1: { halign: 'center', valign: 'middle' },
+        2: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
       },
     });
 
@@ -655,9 +737,20 @@ export function generateExpenseReport(data: ExpenseReportData): jsPDF {
     body: expenseRows,
     theme: 'striped',
     headStyles: { fillColor: [155, 89, 182] },
-    styles: { fontSize: 9 },
+    styles: {
+      fontSize: 9,
+      cellPadding: 4,
+      overflow: 'linebreak',
+      valign: 'middle'
+    },
     columnStyles: {
-      5: { halign: 'right' },
+      0: { valign: 'middle' },
+      1: { valign: 'middle' },
+      2: { valign: 'middle' },
+      3: { valign: 'middle' },
+      4: { valign: 'middle' },
+      5: { halign: 'right', cellPadding: { right: 5 }, valign: 'middle' },
+      6: { valign: 'middle' },
     },
   });
 

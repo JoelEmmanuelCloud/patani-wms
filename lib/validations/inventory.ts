@@ -4,7 +4,7 @@ export const inventorySchema = z.object({
   itemName: z.string().min(1, 'Item name is required'),
   brand: z.string().min(1, 'Brand is required'),
   category: z.enum(['Rice', 'Spaghetti', 'Oil', 'Beans', 'Indomie', 'Other']),
-  unit: z.enum(['Bag', 'Carton', 'Gallon', 'Kg', 'Pieces']),
+  unit: z.enum(['Bag', 'Carton', 'Gallon', 'Kg', 'Pieces', 'Pack', 'Crate', 'Other']),
   quantity: z.number().min(0, 'Quantity cannot be negative'),
   unitPrice: z.number().min(0, 'Unit price cannot be negative'),
   reorderLevel: z.number().min(0, 'Reorder level cannot be negative'),

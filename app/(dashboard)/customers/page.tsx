@@ -56,7 +56,7 @@ export default function CustomersPage() {
     },
     businessName: '',
     customerType: 'Retail',
-    oldBalance: 0,
+    oldBalance: '' as string | number,
     notes: '',
   });
 
@@ -91,10 +91,20 @@ export default function CustomersPage() {
       const url = editingCustomer ? `/api/customers/${editingCustomer._id}` : '/api/customers';
       const method = editingCustomer ? 'PUT' : 'POST';
 
+      // Convert empty oldBalance to 0 and parse formatted value (remove commas)
+      const oldBalanceValue = formData.oldBalance === ''
+        ? 0
+        : Number(typeof formData.oldBalance === 'string' ? formData.oldBalance.replace(/,/g, '') : formData.oldBalance);
+
+      const submitData = {
+        ...formData,
+        oldBalance: oldBalanceValue,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       const data = await res.json();
@@ -141,7 +151,7 @@ export default function CustomersPage() {
       },
       businessName: '',
       customerType: 'Retail',
-      oldBalance: 0,
+      oldBalance: '',
       notes: '',
     });
   };
@@ -155,10 +165,31 @@ export default function CustomersPage() {
       address: customer.address,
       businessName: customer.businessName || '',
       customerType: customer.customerType,
-      oldBalance: customer.oldBalance || 0,
+      oldBalance: customer.oldBalance ? formatNumberWithCommas(customer.oldBalance) : '',
       notes: customer.notes || '',
     });
     setShowForm(true);
+  };
+
+  const formatNumberWithCommas = (value: number | string): string => {
+    if (!value) return '';
+    const numValue = typeof value === 'string' ? value.replace(/,/g, '') : value.toString();
+    const number = parseFloat(numValue);
+    if (isNaN(number)) return '';
+    return number.toLocaleString('en-US');
+  };
+
+  const handleOldBalanceChange = (value: string) => {
+    // Remove all non-digit characters except decimal point
+    const cleanValue = value.replace(/[^\d.]/g, '');
+
+    // Format with commas
+    if (cleanValue === '') {
+      setFormData({ ...formData, oldBalance: '' });
+    } else {
+      const formatted = formatNumberWithCommas(cleanValue);
+      setFormData({ ...formData, oldBalance: formatted });
+    }
   };
 
   return (
@@ -222,9 +253,9 @@ export default function CustomersPage() {
                 </Select>
                 <Input
                   label="Old Balance (₦)"
-                  type="number"
+                  type="text"
                   value={formData.oldBalance}
-                  onChange={(e) => setFormData({ ...formData, oldBalance: Number(e.target.value) })}
+                  onChange={(e) => handleOldBalanceChange(e.target.value)}
                   placeholder="Previous balance before system"
                 />
                 <Input

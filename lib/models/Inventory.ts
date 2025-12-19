@@ -1,7 +1,7 @@
 import mongoose, { Schema, Model, Document } from 'mongoose';
 
 export type CategoryType = 'Rice' | 'Spaghetti' | 'Oil' | 'Beans' | 'Indomie' | 'Other';
-export type UnitType = 'Bag' | 'Carton' | 'Gallon' | 'Kg' | 'Pieces';
+export type UnitType = 'Bag' | 'Carton' | 'Gallon' | 'Kg' | 'Pieces' | 'Pack' | 'Crate' | 'Other';
 export type StockStatus = 'In Stock' | 'Low Stock' | 'Out of Stock';
 
 export interface IInventory extends Document {

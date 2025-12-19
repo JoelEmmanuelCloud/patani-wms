@@ -90,17 +90,16 @@ export default function CustomerDetailPage() {
   const [showEditOrderForm, setShowEditOrderForm] = useState(false);
 
   // Order form state
-  const [orderItems, setOrderItems] = useState<any[]>([{ inventory: '', quantity: 1, unitPrice: 0 }]);
+  const [orderItems, setOrderItems] = useState<any[]>([{ inventory: '', quantity: '', unitPrice: 0 }]);
   const [orderFormData, setOrderFormData] = useState({
-    discount: 0,
-    amountPaid: 0,
+    amountPaid: '' as string | number,
     deliveryAddress: '',
     notes: '',
   });
 
   // Payment form state
   const [paymentFormData, setPaymentFormData] = useState({
-    amount: 0,
+    amount: '' as string | number,
     paymentMethod: 'Cash',
     paymentDate: new Date().toISOString().split('T')[0],
     referenceNumber: '',
@@ -116,6 +115,43 @@ export default function CustomerDetailPage() {
     deliveryAddress: '',
     notes: '',
   });
+
+  // Format number with thousand separators
+  const formatNumberWithCommas = (value: number | string): string => {
+    if (!value) return '';
+    const numValue = typeof value === 'string' ? value.replace(/,/g, '') : value.toString();
+    const number = parseFloat(numValue);
+    if (isNaN(number)) return '';
+    return number.toLocaleString('en-US');
+  };
+
+  // Handle payment amount change with formatting
+  const handlePaymentAmountChange = (value: string) => {
+    // Remove all non-digit characters except decimal point
+    const cleanValue = value.replace(/[^\d.]/g, '');
+
+    // Format with commas
+    if (cleanValue === '') {
+      setPaymentFormData({ ...paymentFormData, amount: '' });
+    } else {
+      const formatted = formatNumberWithCommas(cleanValue);
+      setPaymentFormData({ ...paymentFormData, amount: formatted });
+    }
+  };
+
+  // Handle order amount paid change with formatting
+  const handleOrderAmountPaidChange = (value: string) => {
+    // Remove all non-digit characters except decimal point
+    const cleanValue = value.replace(/[^\d.]/g, '');
+
+    // Format with commas
+    if (cleanValue === '') {
+      setOrderFormData({ ...orderFormData, amountPaid: '' });
+    } else {
+      const formatted = formatNumberWithCommas(cleanValue);
+      setOrderFormData({ ...orderFormData, amountPaid: formatted });
+    }
+  };
 
   useEffect(() => {
     fetchCustomerDetails();
@@ -272,17 +308,21 @@ export default function CustomerDetailPage() {
     try {
       // Prepare order items with full details
       const items = orderItems
-        .filter(item => item.inventory && item.quantity > 0)
+        .filter(item => {
+          const qty = Number(item.quantity);
+          return item.inventory && qty > 0;
+        })
         .map(item => {
           const inventoryItem = inventoryItems.find(inv => inv._id === item.inventory);
+          const quantity = Number(item.quantity);
           return {
             inventory: item.inventory,
             itemName: inventoryItem?.itemName || '',
             brand: inventoryItem?.brand || '',
             unit: inventoryItem?.unit || '',
-            quantity: item.quantity,
+            quantity: quantity,
             unitPrice: item.unitPrice || inventoryItem?.unitPrice || 0,
-            totalPrice: item.quantity * (item.unitPrice || inventoryItem?.unitPrice || 0),
+            totalPrice: quantity * (item.unitPrice || inventoryItem?.unitPrice || 0),
           };
         });
 
@@ -292,11 +332,16 @@ export default function CustomerDetailPage() {
         return;
       }
 
+      // Parse the formatted amountPaid (remove commas)
+      const amountPaidValue = orderFormData.amountPaid === ''
+        ? 0
+        : Number(typeof orderFormData.amountPaid === 'string' ? orderFormData.amountPaid.replace(/,/g, '') : orderFormData.amountPaid);
+
       const orderData = {
         customer: customerId,
         items,
-        discount: orderFormData.discount,
-        amountPaid: orderFormData.amountPaid,
+        discount: 0,
+        amountPaid: amountPaidValue,
         deliveryAddress: orderFormData.deliveryAddress || customer?.address.street,
         notes: orderFormData.notes,
         createdBy: 'Admin',
@@ -313,8 +358,8 @@ export default function CustomerDetailPage() {
       if (result.success) {
         alert('Order created successfully!');
         setShowOrderForm(false);
-        setOrderItems([{ inventory: '', quantity: 1, unitPrice: 0 }]);
-        setOrderFormData({ discount: 0, amountPaid: 0, deliveryAddress: '', notes: '' });
+        setOrderItems([{ inventory: '', quantity: '', unitPrice: 0 }]);
+        setOrderFormData({ amountPaid: '', deliveryAddress: '', notes: '' });
         fetchCustomerDetails();
       } else {
         alert(result.message || 'Failed to create order');
@@ -332,7 +377,12 @@ export default function CustomerDetailPage() {
     setLoading(true);
 
     try {
-      if (paymentFormData.amount <= 0) {
+      // Parse the formatted amount (remove commas)
+      const amountValue = paymentFormData.amount === ''
+        ? 0
+        : Number(typeof paymentFormData.amount === 'string' ? paymentFormData.amount.replace(/,/g, '') : paymentFormData.amount);
+
+      if (amountValue <= 0) {
         alert('Please enter a valid payment amount');
         setLoading(false);
         return;
@@ -340,7 +390,7 @@ export default function CustomerDetailPage() {
 
       const paymentData = {
         customer: customerId,
-        amount: paymentFormData.amount,
+        amount: amountValue,
         paymentMethod: paymentFormData.paymentMethod,
         paymentDate: paymentFormData.paymentDate,
         referenceNumber: paymentFormData.referenceNumber,
@@ -362,7 +412,7 @@ export default function CustomerDetailPage() {
         alert('Payment recorded successfully!');
         setShowPaymentForm(false);
         setPaymentFormData({
-          amount: 0,
+          amount: '',
           paymentMethod: 'Cash',
           paymentDate: new Date().toISOString().split('T')[0],
           referenceNumber: '',
@@ -383,7 +433,7 @@ export default function CustomerDetailPage() {
   };
 
   const addOrderItem = () => {
-    setOrderItems([...orderItems, { inventory: '', quantity: 1, unitPrice: 0 }]);
+    setOrderItems([...orderItems, { inventory: '', quantity: '', unitPrice: 0 }]);
   };
 
   const removeOrderItem = (index: number) => {
@@ -410,11 +460,11 @@ export default function CustomerDetailPage() {
   const calculateOrderTotal = () => {
     const subtotal = orderItems.reduce((sum, item) => {
       const price = item.unitPrice || inventoryItems.find(inv => inv._id === item.inventory)?.unitPrice || 0;
-      return sum + (item.quantity * price);
+      const quantity = Number(item.quantity) || 0;
+      return sum + (quantity * price);
     }, 0);
-    const discount = orderFormData.discount || 0;
-    const total = subtotal - discount;
-    return { subtotal, discount, total };
+    const total = subtotal;
+    return { subtotal, total };
   };
 
   const getPaymentStatusColor = (status: string) => {
@@ -550,11 +600,14 @@ export default function CustomerDetailPage() {
                     </Select>
                     <Input
                       label="Quantity"
-                      type="number"
+                      type="text"
                       required
-                      min="1"
                       value={item.quantity}
-                      onChange={(e) => updateOrderItem(index, 'quantity', Number(e.target.value))}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d]/g, '');
+                        updateOrderItem(index, 'quantity', value);
+                      }}
+                      placeholder="Enter quantity"
                     />
                     <Input
                       label="Unit Price (₦)"
@@ -576,20 +629,11 @@ export default function CustomerDetailPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
                 <Input
-                  label="Discount (₦)"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={orderFormData.discount}
-                  onChange={(e) => setOrderFormData({ ...orderFormData, discount: Number(e.target.value) })}
-                />
-                <Input
                   label="Amount Paid Now (₦)"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
                   value={orderFormData.amountPaid}
-                  onChange={(e) => setOrderFormData({ ...orderFormData, amountPaid: Number(e.target.value) })}
+                  onChange={(e) => handleOrderAmountPaidChange(e.target.value)}
+                  placeholder="Enter amount paid"
                 />
                 <Input
                   label="Delivery Address"
@@ -611,12 +655,6 @@ export default function CustomerDetailPage() {
                       <span>Subtotal:</span>
                       <span>{formatCurrency(calculateOrderTotal().subtotal)}</span>
                     </div>
-                    {calculateOrderTotal().discount > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Discount:</span>
-                        <span>-{formatCurrency(calculateOrderTotal().discount)}</span>
-                      </div>
-                    )}
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>Total:</span>
                       <span>{formatCurrency(calculateOrderTotal().total)}</span>
@@ -649,12 +687,10 @@ export default function CustomerDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   label="Amount (₦)"
-                  type="number"
+                  type="text"
                   required
-                  min="0.01"
-                  step="0.01"
                   value={paymentFormData.amount}
-                  onChange={(e) => setPaymentFormData({ ...paymentFormData, amount: Number(e.target.value) })}
+                  onChange={(e) => handlePaymentAmountChange(e.target.value)}
                   placeholder="Enter payment amount"
                 />
                 <Select

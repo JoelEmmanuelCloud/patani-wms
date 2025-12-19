@@ -3,9 +3,5 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["iad1"],
-  "env": {
-    "MONGODB_URI": "@mongodb-uri",
-    "NODE_ENV": "production"
-  }
+  "regions": ["iad1"]
 }

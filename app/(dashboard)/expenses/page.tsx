@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input, Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
-import { formatCurrency, formatDate } from '@/lib/utils/formatters';
+import { formatCurrency, formatDate, formatNumber } from '@/lib/utils/formatters';
 import { Plus, Search, Edit, Trash2, TrendingDown, FileText } from 'lucide-react';
 import { downloadExpenseReport } from '@/lib/utils/pdf-client-handlers';
 
@@ -44,7 +44,7 @@ export default function ExpensesPage() {
   const [formData, setFormData] = useState({
     category: 'Transportation',
     description: '',
-    amount: 0,
+    amount: '' as any,
     vendor: {
       name: '',
       contact: '',
@@ -105,10 +105,18 @@ export default function ExpensesPage() {
       const url = editingExpense ? `/api/expenses/${editingExpense._id}` : '/api/expenses';
       const method = editingExpense ? 'PUT' : 'POST';
 
+      // Convert formatted string to number
+      const submitData = {
+        ...formData,
+        amount: typeof formData.amount === 'string'
+          ? Number(formData.amount.replace(/,/g, ''))
+          : formData.amount,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       const data = await res.json();
@@ -157,7 +165,7 @@ export default function ExpensesPage() {
     setFormData({
       category: 'Transportation',
       description: '',
-      amount: 0,
+      amount: '' as any,
       vendor: {
         name: '',
         contact: '',
@@ -177,7 +185,7 @@ export default function ExpensesPage() {
     setFormData({
       category: expense.category,
       description: expense.description,
-      amount: expense.amount,
+      amount: formatNumber(expense.amount) as any,
       vendor: expense.vendor,
       paymentMethod: expense.paymentMethod,
       expenseDate: new Date(expense.expenseDate).toISOString().split('T')[0],
@@ -188,6 +196,22 @@ export default function ExpensesPage() {
       notes: expense.notes || '',
     });
     setShowForm(true);
+  };
+
+  // Format number with thousand separators
+  const formatNumberInput = (value: string): string => {
+    // Remove all non-digit characters
+    const numbers = value.replace(/\D/g, '');
+    if (!numbers) return '';
+
+    // Add thousand separators
+    return Number(numbers).toLocaleString('en-US');
+  };
+
+  // Handle numeric input change with formatting
+  const handleAmountChange = (value: string) => {
+    const formatted = formatNumberInput(value);
+    setFormData({ ...formData, amount: formatted });
   };
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -276,10 +300,11 @@ export default function ExpensesPage() {
                 </Select>
                 <Input
                   label="Amount (₦)"
-                  type="number"
+                  type="text"
                   required
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                  onChange={(e) => handleAmountChange(e.target.value)}
+                  placeholder="e.g., 10,000"
                 />
                 <Input
                   label="Description"

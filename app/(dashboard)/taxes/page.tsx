@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input, Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
-import { formatCurrency, formatDate } from '@/lib/utils/formatters';
+import { formatCurrency, formatDate, formatNumber } from '@/lib/utils/formatters';
 import { Plus, Search, Edit, Trash2, FileText } from 'lucide-react';
 
 interface Tax {
@@ -49,8 +49,8 @@ export default function TaxesPage() {
       quarter: undefined as number | undefined,
       year: new Date().getFullYear(),
     },
-    taxableAmount: 0,
-    taxRate: 7.5,
+    taxableAmount: '' as any,
+    taxRate: '' as any,
     dueDate: new Date().toISOString().split('T')[0],
     paymentDate: '',
     paymentReference: '',
@@ -100,7 +100,15 @@ export default function TaxesPage() {
     setLoading(true);
 
     try {
-      const taxAmount = (formData.taxableAmount * formData.taxRate) / 100;
+      // Convert formatted strings to numbers
+      const taxableAmount = typeof formData.taxableAmount === 'string'
+        ? Number(formData.taxableAmount.replace(/,/g, ''))
+        : formData.taxableAmount;
+      const taxRate = typeof formData.taxRate === 'string'
+        ? Number(formData.taxRate.replace(/,/g, ''))
+        : formData.taxRate;
+
+      const taxAmount = (taxableAmount * taxRate) / 100;
       const url = editingTax ? `/api/taxes/${editingTax._id}` : '/api/taxes';
       const method = editingTax ? 'PUT' : 'POST';
 
@@ -109,6 +117,8 @@ export default function TaxesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          taxableAmount,
+          taxRate,
           taxAmount,
           status: formData.paymentDate ? 'Paid' : 'Pending',
         }),
@@ -153,8 +163,8 @@ export default function TaxesPage() {
         quarter: undefined,
         year: new Date().getFullYear(),
       },
-      taxableAmount: 0,
-      taxRate: 7.5,
+      taxableAmount: '' as any,
+      taxRate: '' as any,
       dueDate: new Date().toISOString().split('T')[0],
       paymentDate: '',
       paymentReference: '',
@@ -170,8 +180,8 @@ export default function TaxesPage() {
     setFormData({
       taxType: tax.taxType,
       taxPeriod: tax.taxPeriod,
-      taxableAmount: tax.taxableAmount,
-      taxRate: tax.taxRate,
+      taxableAmount: formatNumber(tax.taxableAmount) as any,
+      taxRate: tax.taxRate.toString() as any,
       dueDate: new Date(tax.dueDate).toISOString().split('T')[0],
       paymentDate: tax.paymentDate ? new Date(tax.paymentDate).toISOString().split('T')[0] : '',
       paymentReference: tax.paymentReference || '',
@@ -181,6 +191,39 @@ export default function TaxesPage() {
       notes: tax.notes || '',
     });
     setShowForm(true);
+  };
+
+  // Format number with thousand separators
+  const formatNumberInput = (value: string): string => {
+    // Remove all non-digit characters
+    const numbers = value.replace(/\D/g, '');
+    if (!numbers) return '';
+
+    // Add thousand separators
+    return Number(numbers).toLocaleString('en-US');
+  };
+
+  // Format decimal number (for tax rate)
+  const formatDecimalInput = (value: string): string => {
+    // Allow digits and one decimal point
+    const cleaned = value.replace(/[^\d.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      return parts[0] + '.' + parts.slice(1).join('');
+    }
+    return cleaned;
+  };
+
+  // Handle taxable amount change with formatting
+  const handleTaxableAmountChange = (value: string) => {
+    const formatted = formatNumberInput(value);
+    setFormData({ ...formData, taxableAmount: formatted });
+  };
+
+  // Handle tax rate change
+  const handleTaxRateChange = (value: string) => {
+    const formatted = formatDecimalInput(value);
+    setFormData({ ...formData, taxRate: formatted });
   };
 
   const getTaxPeriodDisplay = (tax: Tax) => {
@@ -291,24 +334,34 @@ export default function TaxesPage() {
                 />
                 <Input
                   label="Taxable Amount (₦)"
-                  type="number"
+                  type="text"
                   required
                   value={formData.taxableAmount}
-                  onChange={(e) => setFormData({ ...formData, taxableAmount: Number(e.target.value) })}
+                  onChange={(e) => handleTaxableAmountChange(e.target.value)}
+                  placeholder="e.g., 1,000,000"
                 />
                 <Input
                   label="Tax Rate (%)"
-                  type="number"
-                  step="0.1"
+                  type="text"
                   required
                   value={formData.taxRate}
-                  onChange={(e) => setFormData({ ...formData, taxRate: Number(e.target.value) })}
+                  onChange={(e) => handleTaxRateChange(e.target.value)}
+                  placeholder="e.g., 7.5"
                 />
                 <Input
                   label="Tax Amount (Auto-calculated)"
-                  type="number"
+                  type="text"
                   disabled
-                  value={(formData.taxableAmount * formData.taxRate) / 100}
+                  value={(() => {
+                    const taxableAmount = typeof formData.taxableAmount === 'string'
+                      ? Number(formData.taxableAmount.replace(/,/g, ''))
+                      : formData.taxableAmount;
+                    const taxRate = typeof formData.taxRate === 'string'
+                      ? Number(formData.taxRate.replace(/,/g, ''))
+                      : formData.taxRate;
+                    const taxAmount = (taxableAmount * taxRate) / 100;
+                    return isNaN(taxAmount) ? '' : formatNumber(taxAmount);
+                  })()}
                 />
                 <Input
                   label="Due Date"

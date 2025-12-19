@@ -1,0 +1,131 @@
+import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
+import connectDB from '@/lib/db/mongodb';
+import Order from '@/lib/models/Order';
+import Customer from '@/lib/models/Customer';
+import Inventory from '@/lib/models/Inventory';
+import { updateOrderSchema } from '@/lib/validations/order';
+import { successResponse, errorResponse, handleApiError } from '@/lib/utils/api-helpers';
+
+/**
+ * GET /api/orders/[id]
+ * Get single order
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+
+    const order = await Order.findById(params.id)
+      .populate('customer', 'name phone email businessName address')
+      .populate('items.inventory', 'itemName brand category unit');
+
+    if (!order) {
+      return errorResponse('Order not found', 404);
+    }
+
+    return successResponse(order);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+/**
+ * PUT /api/orders/[id]
+ * Update order status
+ */
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+
+    const body = await request.json();
+    const validatedData = updateOrderSchema.parse(body);
+
+    const order = await Order.findByIdAndUpdate(
+      params.id,
+      validatedData,
+      { new: true, runValidators: true }
+    ).populate('customer', 'name phone businessName');
+
+    if (!order) {
+      return errorResponse('Order not found', 404);
+    }
+
+    return successResponse(order);
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return errorResponse('Validation failed: ' + error.errors[0].message, 400, error);
+    }
+    return handleApiError(error);
+  }
+}
+
+/**
+ * DELETE /api/orders/[id]
+ * Cancel order and restore inventory
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    await connectDB();
+
+    const order = await Order.findById(params.id).session(session);
+
+    if (!order) {
+      await session.abortTransaction();
+      return errorResponse('Order not found', 404);
+    }
+
+    if (order.status === 'Cancelled') {
+      await session.abortTransaction();
+      return errorResponse('Order is already cancelled', 400);
+    }
+
+    // Restore inventory quantities
+    await Promise.all(
+      order.items.map((item) =>
+        Inventory.findByIdAndUpdate(
+          item.inventory,
+          { $inc: { quantity: item.quantity } },
+          { session }
+        )
+      )
+    );
+
+    // Update customer balance and stats
+    await Customer.findByIdAndUpdate(
+      order.customer,
+      {
+        $inc: {
+          balance: -order.balance,
+          totalOrders: -1,
+          totalPurchases: -order.total,
+        },
+      },
+      { session }
+    );
+
+    // Update order status to cancelled
+    order.status = 'Cancelled';
+    await order.save({ session });
+
+    await session.commitTransaction();
+
+    return successResponse({ message: 'Order cancelled successfully', order });
+  } catch (error) {
+    await session.abortTransaction();
+    return handleApiError(error);
+  } finally {
+    session.endSession();
+  }
+}

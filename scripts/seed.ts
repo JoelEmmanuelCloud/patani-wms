@@ -145,7 +145,7 @@ async function seedCustomers() {
 
 async function seedInventory() {
   console.log('Seeding inventory...');
-  const inventory = [];
+  const inventory: any[] = [];
   const locations = ['Warehouse A-01', 'Warehouse A-02', 'Warehouse B-01', 'Warehouse B-02', 'Storage C-01'];
 
   // Add rice products

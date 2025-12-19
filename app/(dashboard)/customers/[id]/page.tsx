@@ -48,6 +48,8 @@ interface Order {
   status: string;
   paymentStatus: string;
   deliveryStatus: string;
+  deliveryAddress?: string;
+  notes?: string;
 }
 
 interface Payment {
@@ -745,7 +747,7 @@ export default function CustomerDetailPage() {
                   <strong>Customer Total Debt:</strong> {formatCurrency(stats?.totalDebt || 0)}
                 </p>
                 <p className="text-sm text-blue-700 mt-1">
-                  This payment will be deducted from the customer's total outstanding balance.
+                  This payment will be deducted from the customer&apos;s total outstanding balance.
                 </p>
               </div>
 
@@ -1019,7 +1021,7 @@ export default function CustomerDetailPage() {
                             type="button"
                             size="sm"
                             variant="ghost"
-                            onClick={(e) => handleEditOrder(order, e)}
+                            onClick={() => handleEditOrder(order)}
                             title="Edit Order"
                           >
                             <Edit className="h-4 w-4" />
@@ -1028,7 +1030,7 @@ export default function CustomerDetailPage() {
                             type="button"
                             size="sm"
                             variant="ghost"
-                            onClick={(e) => handleDeleteOrder(order, e)}
+                            onClick={() => handleDeleteOrder(order)}
                             title="Delete Order"
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />

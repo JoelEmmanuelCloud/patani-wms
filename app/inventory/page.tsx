@@ -229,7 +229,7 @@ export default function InventoryPage() {
                   <option value="Gallon">Gallon</option>
                   <option value="Kg">Kg</option>
                   <option value="Pieces">Pieces</option>
-                  <option value="Crate">Pack</option>
+                  <option value="Crate">Crate</option>
                   <option value="Pack">Pack</option>
                   <option value="Other">Other</option>
                 </Select>

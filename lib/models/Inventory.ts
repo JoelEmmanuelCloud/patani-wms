@@ -42,7 +42,7 @@ const InventorySchema = new Schema<IInventory>(
     unit: {
       type: String,
       required: [true, 'Unit is required'],
-      enum: ['Bag', 'Carton', 'Gallon', 'Kg', 'Pieces'],
+      enum: ['Bag', 'Carton', 'Gallon', 'Kg', 'Pieces', 'Pack', 'Crate', 'Other'],
     },
     quantity: {
       type: Number,

@@ -41,8 +41,8 @@ export default function InventoryPage() {
     brand: '',
     category: 'Rice',
     unit: 'Bag',
-    quantity: 0,
-    unitPrice: 0,
+    quantity: '' as any,
+    unitPrice: '' as any,
     reorderLevel: 10,
     location: '',
     supplier: {
@@ -81,10 +81,21 @@ export default function InventoryPage() {
       const url = editingItem ? `/api/inventory/${editingItem._id}` : '/api/inventory';
       const method = editingItem ? 'PUT' : 'POST';
 
+      // Convert formatted strings to numbers
+      const submitData = {
+        ...formData,
+        quantity: typeof formData.quantity === 'string'
+          ? Number(formData.quantity.replace(/,/g, ''))
+          : formData.quantity,
+        unitPrice: typeof formData.unitPrice === 'string'
+          ? Number(formData.unitPrice.replace(/,/g, ''))
+          : formData.unitPrice,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       const data = await res.json();
@@ -135,8 +146,8 @@ export default function InventoryPage() {
       brand: '',
       category: 'Rice',
       unit: 'Bag',
-      quantity: 0,
-      unitPrice: 0,
+      quantity: '' as any,
+      unitPrice: '' as any,
       reorderLevel: 10,
       location: '',
       supplier: { name: '', contact: '' },
@@ -150,13 +161,29 @@ export default function InventoryPage() {
       brand: item.brand,
       category: item.category,
       unit: item.unit,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
+      quantity: formatNumber(item.quantity) as any,
+      unitPrice: formatNumber(item.unitPrice) as any,
       reorderLevel: item.reorderLevel,
       location: item.location,
       supplier: item.supplier,
     });
     setShowForm(true);
+  };
+
+  // Format number with thousand separators
+  const formatNumberInput = (value: string): string => {
+    // Remove all non-digit characters
+    const numbers = value.replace(/\D/g, '');
+    if (!numbers) return '';
+
+    // Add thousand separators
+    return Number(numbers).toLocaleString('en-US');
+  };
+
+  // Handle numeric input change with formatting
+  const handleNumberChange = (field: 'quantity' | 'unitPrice', value: string) => {
+    const formatted = formatNumberInput(value);
+    setFormData({ ...formData, [field]: formatted });
   };
 
   return (
@@ -235,17 +262,19 @@ export default function InventoryPage() {
                 </Select>
                 <Input
                   label="Quantity"
-                  type="number"
+                  type="text"
                   required
                   value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                  onChange={(e) => handleNumberChange('quantity', e.target.value)}
+                  placeholder="e.g., 100"
                 />
                 <Input
                   label="Unit Price (₦)"
-                  type="number"
+                  type="text"
                   required
                   value={formData.unitPrice}
-                  onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
+                  onChange={(e) => handleNumberChange('unitPrice', e.target.value)}
+                  placeholder="e.g., 5,000"
                 />
                 <Input
                   label="Reorder Level"

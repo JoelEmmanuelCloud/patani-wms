@@ -17,6 +17,7 @@ export interface ICustomer extends Document {
   customerType: CustomerType;
   balance: number;
   oldBalance: number;
+  oldBalanceRemaining: number;
   creditLimit: number;
   status: CustomerStatus;
   totalOrders: number;

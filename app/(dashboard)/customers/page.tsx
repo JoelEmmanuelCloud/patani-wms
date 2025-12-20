@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Input, Select } from '@/components/ui/Input';
-import { Badge } from '@/components/ui/Badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select, Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
 import { formatCurrency, formatNumber } from '@/lib/utils/formatters';
 import { Plus, Search, Edit, Trash2, Users, Eye } from 'lucide-react';
 

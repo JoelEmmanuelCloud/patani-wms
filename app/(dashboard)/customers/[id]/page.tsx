@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Input, Select } from '@/components/ui/Input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
-import { Badge } from '@/components/ui/Badge';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Badge } from '@/components/ui';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils/formatters';
 import { ArrowLeft, Download, FileText, Phone, Mail, MapPin, Building, Plus, CreditCard, Printer, Edit, Trash2 } from 'lucide-react';
 import { downloadCustomerStatement, downloadOrderInvoice } from '@/lib/utils/pdf-client-handlers';

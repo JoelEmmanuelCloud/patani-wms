@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../../components
 import { Input, Select } from '../../../../components/ui/Input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/Table';
 import { Badge } from '../../../../components/ui/Badge';
-import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils/formatters';
+import { formatCurrency, formatDate, formatDateTime } from '../../../../lib/utils/formatters';
 import { ArrowLeft, Download, FileText, Phone, Mail, MapPin, Building, Plus, CreditCard, Printer, Edit, Trash2 } from 'lucide-react';
-import { downloadCustomerStatement, downloadOrderInvoice } from '@/lib/utils/pdf-client-handlers';
+import { downloadCustomerStatement, downloadOrderInvoice } from '../../../../lib/utils/pdf-client-handlers';
 
 interface Customer {
   _id: string;

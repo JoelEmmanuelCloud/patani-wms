@@ -7,7 +7,11 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Ensure proper module resolution
+  webpack: (config) => {
+    // Ensure proper module resolution with explicit extensions
+    config.resolve.extensions = ['.tsx', '.ts', '.jsx', '.js', '.json'];
+    return config;
+  },
 };
 
 module.exports = nextConfig;

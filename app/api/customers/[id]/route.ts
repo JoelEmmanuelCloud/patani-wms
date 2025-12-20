@@ -37,7 +37,8 @@ export async function GET(
     const totalOrderValue = orders.reduce((sum, order) => sum + order.total, 0);
     const totalPayments = payments.reduce((sum, payment) => sum + payment.amount, 0);
     const totalOrderDebt = orders.reduce((sum, order) => sum + order.balance, 0);
-    const totalDebt = customer.oldBalance + totalOrderDebt; // Total outstanding debt
+    // Total Debt uses oldBalanceRemaining (dynamic) not oldBalance (static display)
+    const totalDebt = customer.oldBalanceRemaining + totalOrderDebt;
 
     return successResponse({
       customer,

@@ -81,7 +81,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = customerSchema.parse(body);
 
-    const customer = await Customer.create(validatedData);
+    // Set oldBalanceRemaining to match oldBalance at creation
+    const customerData = {
+      ...validatedData,
+      oldBalanceRemaining: validatedData.oldBalance || 0,
+    };
+
+    const customer = await Customer.create(customerData);
 
     return successResponse(customer, 201);
   } catch (error: any) {

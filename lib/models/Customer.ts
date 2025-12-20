@@ -85,7 +85,13 @@ const CustomerSchema = new Schema<ICustomer>(
     oldBalance: {
       type: Number,
       default: 0,
-      // Represents pre-system debt
+      // STATIC: Represents pre-system debt (for display only, never changes)
+    },
+    oldBalanceRemaining: {
+      type: Number,
+      default: 0,
+      min: [0, 'Old balance remaining cannot be negative'],
+      // DYNAMIC: Tracks remaining old balance debt (can be paid down)
     },
     creditLimit: {
       type: Number,

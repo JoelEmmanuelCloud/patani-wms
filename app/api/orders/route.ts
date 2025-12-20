@@ -134,8 +134,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate wallet application (wallet system)
-    const walletBalance = customer.balance; // Current wallet
-    const walletToApply = Math.min(walletBalance, total); // Use wallet up to order total
+    const currentWallet = customer.balance; // Current wallet
+    const walletToApply = Math.min(currentWallet, total); // Use wallet up to order total
     const balance = total - walletToApply;
 
     // Create order
@@ -181,8 +181,15 @@ export async function POST(request: NextRequest) {
     const allOrders = await Order.find({ customer: validatedData.customer }).session(session);
     const totalOrderDebt = allOrders.reduce((sum, o) => sum + o.balance, 0);
 
-    const totalDebt = customer.oldBalance + totalOrderDebt;
-    const walletBalance = Math.max(0, totalPayments - totalDebt);
+    // Total Debt uses oldBalanceRemaining (dynamic) not oldBalance (static display)
+    const totalDebt = customer.oldBalanceRemaining + totalOrderDebt;
+
+    // Wallet ONLY has money when ALL debt is paid (totalDebt = 0)
+    let walletBalance = 0;
+    if (totalDebt === 0) {
+      // All debt paid, excess goes to wallet
+      walletBalance = totalPayments - customer.oldBalance;
+    }
 
     // Update customer stats and recalculated wallet
     await Customer.findByIdAndUpdate(
@@ -193,7 +200,7 @@ export async function POST(request: NextRequest) {
           totalPurchases: total,
         },
         $set: {
-          balance: walletBalance, // Set recalculated wallet
+          balance: Math.max(0, walletBalance), // Set recalculated wallet
         },
         lastOrderDate: new Date(),
       },

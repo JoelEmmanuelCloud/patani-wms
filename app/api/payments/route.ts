@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
         .sort({ createdAt: 1 }) // Oldest first
         .session(session);
 
-      // Apply to orders only (Old Balance is STATIC and never changes)
+      // Apply to orders first
       for (const order of orders) {
         if (remainingPayment <= 0) break;
 
@@ -151,26 +151,34 @@ export async function POST(request: NextRequest) {
         remainingPayment -= paymentToOrder;
       }
 
-      // NOTE: Old Balance is STATIC and is never modified by payments
-      // It represents historical debt before the system was created
+      // Then apply to oldBalanceRemaining (dynamic debt from pre-system)
+      if (remainingPayment > 0 && customer.oldBalanceRemaining > 0) {
+        const paymentToOldBalance = Math.min(remainingPayment, customer.oldBalanceRemaining);
+        customer.oldBalanceRemaining -= paymentToOldBalance;
+        remainingPayment -= paymentToOldBalance;
+      }
     }
 
     // Recalculate wallet: Wallet = Max(0, Total Payments - Total Debt)
     // Get all payments for this customer
-    const Payment = (await import('@/lib/models/Payment')).default;
-    const Order = (await import('@/lib/models/Order')).default;
-
     const allPayments = await Payment.find({ customer: validatedData.customer }).session(session);
     const totalPayments = allPayments.reduce((sum, p) => sum + p.amount, 0);
 
     const allOrders = await Order.find({ customer: validatedData.customer }).session(session);
     const totalOrderDebt = allOrders.reduce((sum, o) => sum + o.balance, 0);
 
-    const totalDebt = customer.oldBalance + totalOrderDebt;
-    const walletBalance = Math.max(0, totalPayments - totalDebt);
+    // Total Debt uses oldBalanceRemaining (dynamic) not oldBalance (static display)
+    const totalDebt = customer.oldBalanceRemaining + totalOrderDebt;
+
+    // Wallet ONLY has money when ALL debt is paid (totalDebt = 0)
+    let walletBalance = 0;
+    if (totalDebt === 0) {
+      // All debt paid, excess goes to wallet
+      walletBalance = totalPayments - customer.oldBalance;
+    }
 
     // Set wallet to calculated value
-    customer.balance = walletBalance;
+    customer.balance = Math.max(0, walletBalance);
 
     // Save customer updates
     await customer.save({ session });

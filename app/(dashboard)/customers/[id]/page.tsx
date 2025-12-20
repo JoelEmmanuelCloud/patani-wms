@@ -92,6 +92,7 @@ export default function CustomerDetailPage() {
   const [orderFormData, setOrderFormData] = useState({
     deliveryAddress: '',
     notes: '',
+    discount: 0,
   });
 
   // Payment form state
@@ -318,7 +319,7 @@ export default function CustomerDetailPage() {
       const orderData = {
         customer: customerId,
         items,
-        discount: 0,
+        discount: Number(orderFormData.discount) || 0,
         deliveryAddress: orderFormData.deliveryAddress || customer?.address.street,
         notes: orderFormData.notes,
         createdBy: 'Admin',
@@ -336,7 +337,7 @@ export default function CustomerDetailPage() {
         alert('Order created successfully!');
         setShowOrderForm(false);
         setOrderItems([{ inventory: '', quantity: '', unitPrice: 0 }]);
-        setOrderFormData({ deliveryAddress: '', notes: '' });
+        setOrderFormData({ deliveryAddress: '', notes: '', discount: 0 });
         fetchCustomerDetails();
       } else {
         alert(result.message || 'Failed to create order');
@@ -440,8 +441,9 @@ export default function CustomerDetailPage() {
       const quantity = Number(item.quantity) || 0;
       return sum + (quantity * price);
     }, 0);
-    const total = subtotal;
-    return { subtotal, total };
+    const discount = Number(orderFormData.discount) || 0;
+    const total = Math.max(0, subtotal - discount);
+    return { subtotal, discount, total };
   };
 
   const getPaymentStatusColor = (status: string) => {
@@ -604,7 +606,7 @@ export default function CustomerDetailPage() {
                 Add Item
               </Button>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
                 <Input
                   label="Delivery Address"
                   value={orderFormData.deliveryAddress}
@@ -616,6 +618,15 @@ export default function CustomerDetailPage() {
                   value={orderFormData.notes}
                   onChange={(e) => setOrderFormData({ ...orderFormData, notes: e.target.value })}
                 />
+                <Input
+                  label="Discount (₦)"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={orderFormData.discount}
+                  onChange={(e) => setOrderFormData({ ...orderFormData, discount: Number(e.target.value) })}
+                  placeholder="0.00"
+                />
               </div>
 
               <div className="border-t pt-4">
@@ -625,6 +636,12 @@ export default function CustomerDetailPage() {
                       <span>Subtotal:</span>
                       <span>{formatCurrency(calculateOrderTotal().subtotal)}</span>
                     </div>
+                    {orderFormData.discount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Discount:</span>
+                        <span>-{formatCurrency(calculateOrderTotal().discount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>Total:</span>
                       <span>{formatCurrency(calculateOrderTotal().total)}</span>

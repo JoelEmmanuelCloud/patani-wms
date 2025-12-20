@@ -7,6 +7,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Ensure proper module resolution
 };
 
 module.exports = nextConfig;

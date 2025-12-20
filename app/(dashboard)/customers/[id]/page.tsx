@@ -92,7 +92,7 @@ export default function CustomerDetailPage() {
   const [orderFormData, setOrderFormData] = useState({
     deliveryAddress: '',
     notes: '',
-    discount: 0,
+    discount: '' as string | number,
   });
 
   // Payment form state
@@ -134,6 +134,20 @@ export default function CustomerDetailPage() {
     } else {
       const formatted = formatNumberWithCommas(cleanValue);
       setPaymentFormData({ ...paymentFormData, amount: formatted });
+    }
+  };
+
+  // Handle discount change with formatting
+  const handleDiscountChange = (value: string) => {
+    // Remove all non-digit characters except decimal point
+    const cleanValue = value.replace(/[^\d.]/g, '');
+
+    // Format with commas
+    if (cleanValue === '') {
+      setOrderFormData({ ...orderFormData, discount: '' });
+    } else {
+      const formatted = formatNumberWithCommas(cleanValue);
+      setOrderFormData({ ...orderFormData, discount: formatted });
     }
   };
 
@@ -316,10 +330,15 @@ export default function CustomerDetailPage() {
         return;
       }
 
+      // Parse discount (remove commas if it's a formatted string)
+      const discountValue = orderFormData.discount === ''
+        ? 0
+        : Number(typeof orderFormData.discount === 'string' ? orderFormData.discount.replace(/,/g, '') : orderFormData.discount);
+
       const orderData = {
         customer: customerId,
         items,
-        discount: Number(orderFormData.discount) || 0,
+        discount: discountValue,
         deliveryAddress: orderFormData.deliveryAddress || customer?.address.street,
         notes: orderFormData.notes,
         createdBy: 'Admin',
@@ -337,7 +356,7 @@ export default function CustomerDetailPage() {
         alert('Order created successfully!');
         setShowOrderForm(false);
         setOrderItems([{ inventory: '', quantity: '', unitPrice: 0 }]);
-        setOrderFormData({ deliveryAddress: '', notes: '', discount: 0 });
+        setOrderFormData({ deliveryAddress: '', notes: '', discount: '' });
         fetchCustomerDetails();
       } else {
         alert(result.message || 'Failed to create order');
@@ -441,9 +460,12 @@ export default function CustomerDetailPage() {
       const quantity = Number(item.quantity) || 0;
       return sum + (quantity * price);
     }, 0);
-    const discount = Number(orderFormData.discount) || 0;
-    const total = Math.max(0, subtotal - discount);
-    return { subtotal, discount, total };
+    // Parse discount (remove commas if it's a formatted string)
+    const discountValue = orderFormData.discount === ''
+      ? 0
+      : Number(typeof orderFormData.discount === 'string' ? orderFormData.discount.replace(/,/g, '') : orderFormData.discount);
+    const total = Math.max(0, subtotal - discountValue);
+    return { subtotal, discount: discountValue, total };
   };
 
   const getPaymentStatusColor = (status: string) => {
@@ -620,12 +642,10 @@ export default function CustomerDetailPage() {
                 />
                 <Input
                   label="Discount (₦)"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
                   value={orderFormData.discount}
-                  onChange={(e) => setOrderFormData({ ...orderFormData, discount: Number(e.target.value) })}
-                  placeholder="0.00"
+                  onChange={(e) => handleDiscountChange(e.target.value)}
+                  placeholder="Enter discount amount"
                 />
               </div>
 
@@ -636,7 +656,7 @@ export default function CustomerDetailPage() {
                       <span>Subtotal:</span>
                       <span>{formatCurrency(calculateOrderTotal().subtotal)}</span>
                     </div>
-                    {orderFormData.discount > 0 && (
+                    {calculateOrderTotal().discount > 0 && (
                       <div className="flex justify-between text-sm text-green-600">
                         <span>Discount:</span>
                         <span>-{formatCurrency(calculateOrderTotal().discount)}</span>

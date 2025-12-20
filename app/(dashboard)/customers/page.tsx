@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Input, Select } from '../../../components/ui/input';
-import { Badge } from '../../../components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
-import { formatCurrency, formatNumber } from '../../../lib/utils/formatters';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Input, Select } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
+import { formatCurrency, formatNumber } from '@/lib/utils/formatters';
 import { Plus, Search, Edit, Trash2, Users, Eye } from 'lucide-react';
 
 interface Customer {

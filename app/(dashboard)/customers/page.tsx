@@ -360,7 +360,7 @@ export default function CustomersPage() {
                   <TableHead>Type</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Location</TableHead>
-                  <TableHead>Balance</TableHead>
+                  <TableHead>Wallet</TableHead>
                   <TableHead>Total Orders</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -394,7 +394,7 @@ export default function CustomersPage() {
                         {customer.address.city}, {customer.address.state}
                       </div>
                     </TableCell>
-                    <TableCell className={customer.balance > 0 ? 'text-red-600 font-medium' : 'text-green-600'}>
+                    <TableCell className="text-green-600 font-medium">
                       {formatCurrency(customer.balance)}
                     </TableCell>
                     <TableCell>{formatNumber(customer.totalOrders)}</TableCell>

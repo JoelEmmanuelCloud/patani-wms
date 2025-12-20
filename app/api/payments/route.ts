@@ -93,6 +93,12 @@ export async function POST(request: NextRequest) {
     // Generate payment number
     const paymentNumber = await generatePaymentNumber();
 
+    // Get customer and their orders to calculate debt
+    const customer = await Customer.findById(validatedData.customer).session(session);
+    if (!customer) {
+      throw new Error('Customer not found');
+    }
+
     // Create payment
     const [payment] = await Payment.create(
       [
@@ -105,22 +111,69 @@ export async function POST(request: NextRequest) {
       { session }
     );
 
-    // Update customer balance (reduce what they owe)
-    await Customer.findByIdAndUpdate(
-      validatedData.customer,
-      { $inc: { balance: -validatedData.amount } },
-      { session }
-    );
+    // Apply payment: Reduce debt first, then excess to wallet
+    let remainingPayment = validatedData.amount;
 
-    // If payment is linked to an order, update order
     if (validatedData.order) {
+      // Payment linked to specific order - apply to that order
       const order = await Order.findById(validatedData.order).session(session);
 
       if (order) {
-        order.amountPaid += validatedData.amount;
+        const orderDebt = order.balance; // What's owed on this order
+        const paymentToOrder = Math.min(remainingPayment, orderDebt);
+
+        // Apply payment to order
+        order.amountPaid += paymentToOrder;
         await order.save({ session });
+
+        remainingPayment -= paymentToOrder;
       }
+    } else {
+      // General payment - apply to all unpaid orders (oldest first), then old balance
+      const Order = (await import('@/lib/models/Order')).default;
+      const orders = await Order.find({
+        customer: validatedData.customer,
+        balance: { $gt: 0 }
+      })
+        .sort({ createdAt: 1 }) // Oldest first
+        .session(session);
+
+      // Apply to orders only (Old Balance is STATIC and never changes)
+      for (const order of orders) {
+        if (remainingPayment <= 0) break;
+
+        const orderDebt = order.balance;
+        const paymentToOrder = Math.min(remainingPayment, orderDebt);
+
+        order.amountPaid += paymentToOrder;
+        await order.save({ session });
+
+        remainingPayment -= paymentToOrder;
+      }
+
+      // NOTE: Old Balance is STATIC and is never modified by payments
+      // It represents historical debt before the system was created
     }
+
+    // Recalculate wallet: Wallet = Max(0, Total Payments - Total Debt)
+    // Get all payments for this customer
+    const Payment = (await import('@/lib/models/Payment')).default;
+    const Order = (await import('@/lib/models/Order')).default;
+
+    const allPayments = await Payment.find({ customer: validatedData.customer }).session(session);
+    const totalPayments = allPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    const allOrders = await Order.find({ customer: validatedData.customer }).session(session);
+    const totalOrderDebt = allOrders.reduce((sum, o) => sum + o.balance, 0);
+
+    const totalDebt = customer.oldBalance + totalOrderDebt;
+    const walletBalance = Math.max(0, totalPayments - totalDebt);
+
+    // Set wallet to calculated value
+    customer.balance = walletBalance;
+
+    // Save customer updates
+    await customer.save({ session });
 
     await session.commitTransaction();
 

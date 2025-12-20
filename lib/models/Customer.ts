@@ -79,7 +79,8 @@ const CustomerSchema = new Schema<ICustomer>(
     balance: {
       type: Number,
       default: 0,
-      // Positive = customer owes, Negative = credit
+      min: [0, 'Balance (wallet) cannot be negative'],
+      // WALLET: Positive = customer prepayments/credits (can only be >= 0)
     },
     oldBalance: {
       type: Number,

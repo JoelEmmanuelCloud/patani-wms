@@ -90,7 +90,6 @@ export default function CustomerDetailPage() {
   // Order form state
   const [orderItems, setOrderItems] = useState<any[]>([{ inventory: '', quantity: '', unitPrice: 0 }]);
   const [orderFormData, setOrderFormData] = useState({
-    amountPaid: '' as string | number,
     deliveryAddress: '',
     notes: '',
   });
@@ -134,20 +133,6 @@ export default function CustomerDetailPage() {
     } else {
       const formatted = formatNumberWithCommas(cleanValue);
       setPaymentFormData({ ...paymentFormData, amount: formatted });
-    }
-  };
-
-  // Handle order amount paid change with formatting
-  const handleOrderAmountPaidChange = (value: string) => {
-    // Remove all non-digit characters except decimal point
-    const cleanValue = value.replace(/[^\d.]/g, '');
-
-    // Format with commas
-    if (cleanValue === '') {
-      setOrderFormData({ ...orderFormData, amountPaid: '' });
-    } else {
-      const formatted = formatNumberWithCommas(cleanValue);
-      setOrderFormData({ ...orderFormData, amountPaid: formatted });
     }
   };
 
@@ -330,16 +315,10 @@ export default function CustomerDetailPage() {
         return;
       }
 
-      // Parse the formatted amountPaid (remove commas)
-      const amountPaidValue = orderFormData.amountPaid === ''
-        ? 0
-        : Number(typeof orderFormData.amountPaid === 'string' ? orderFormData.amountPaid.replace(/,/g, '') : orderFormData.amountPaid);
-
       const orderData = {
         customer: customerId,
         items,
         discount: 0,
-        amountPaid: amountPaidValue,
         deliveryAddress: orderFormData.deliveryAddress || customer?.address.street,
         notes: orderFormData.notes,
         createdBy: 'Admin',
@@ -357,7 +336,7 @@ export default function CustomerDetailPage() {
         alert('Order created successfully!');
         setShowOrderForm(false);
         setOrderItems([{ inventory: '', quantity: '', unitPrice: 0 }]);
-        setOrderFormData({ amountPaid: '', deliveryAddress: '', notes: '' });
+        setOrderFormData({ deliveryAddress: '', notes: '' });
         fetchCustomerDetails();
       } else {
         alert(result.message || 'Failed to create order');
@@ -627,13 +606,6 @@ export default function CustomerDetailPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
                 <Input
-                  label="Amount Paid Now (₦)"
-                  type="text"
-                  value={orderFormData.amountPaid}
-                  onChange={(e) => handleOrderAmountPaidChange(e.target.value)}
-                  placeholder="Enter amount paid"
-                />
-                <Input
                   label="Delivery Address"
                   value={orderFormData.deliveryAddress}
                   onChange={(e) => setOrderFormData({ ...orderFormData, deliveryAddress: e.target.value })}
@@ -656,6 +628,30 @@ export default function CustomerDetailPage() {
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>Total:</span>
                       <span>{formatCurrency(calculateOrderTotal().total)}</span>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Customer Wallet:</span>
+                        <span className="font-semibold text-green-600">
+                          {formatCurrency(customer?.balance || 0)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-gray-600">Wallet Applied:</span>
+                        <span className="font-semibold text-blue-600">
+                          -{formatCurrency(Math.min(customer?.balance || 0, calculateOrderTotal().total))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between mt-1 pt-2 border-t border-blue-300">
+                        <span className="font-medium">Order Debt:</span>
+                        <span className={`font-semibold ${
+                          Math.max(0, calculateOrderTotal().total - (customer?.balance || 0)) > 0
+                            ? 'text-red-600'
+                            : 'text-green-600'
+                        }`}>
+                          {formatCurrency(Math.max(0, calculateOrderTotal().total - (customer?.balance || 0)))}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -740,10 +736,13 @@ export default function CustomerDetailPage() {
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Customer Total Debt:</strong> {formatCurrency(stats?.totalDebt || 0)}
+                  <strong>Customer Wallet:</strong> {formatCurrency(customer?.balance || 0)}
                 </p>
-                <p className="text-sm text-blue-700 mt-1">
-                  This payment will be deducted from the customer&apos;s total outstanding balance.
+                <p className="text-sm text-blue-800 mt-1">
+                  <strong>Total Debt:</strong> {formatCurrency(stats?.totalDebt || 0)}
+                </p>
+                <p className="text-sm text-blue-700 mt-2">
+                  This payment will be added to the customer&apos;s wallet and can be used for future orders.
                 </p>
               </div>
 
@@ -924,11 +923,12 @@ export default function CustomerDetailPage() {
                 {formatCurrency(customer.oldBalance)}
               </div>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-500 mb-1">Current Balance</div>
-              <div className={`text-lg font-bold ${customer.balance > 0 ? 'text-red-600' : customer.balance < 0 ? 'text-green-600' : 'text-gray-900'}`}>
+            <div className="p-4 bg-green-50 rounded-lg border-2 border-green-200">
+              <div className="text-sm text-green-700 mb-1 font-medium">Wallet Balance</div>
+              <div className="text-xl font-bold text-green-600">
                 {formatCurrency(customer.balance)}
               </div>
+              <div className="text-xs text-gray-500 mt-1">Prepaid Credits</div>
             </div>
             <div className="p-4 bg-red-50 rounded-lg border-2 border-red-200">
               <div className="text-sm text-red-700 mb-1 font-medium">Total Debt</div>

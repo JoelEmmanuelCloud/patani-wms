@@ -36,7 +36,8 @@ export async function GET(
     // Calculate statistics
     const totalOrderValue = orders.reduce((sum, order) => sum + order.total, 0);
     const totalPayments = payments.reduce((sum, payment) => sum + payment.amount, 0);
-    const totalDebt = customer.oldBalance + customer.balance;
+    const totalOrderDebt = orders.reduce((sum, order) => sum + order.balance, 0);
+    const totalDebt = customer.oldBalance + totalOrderDebt; // Total outstanding debt
 
     return successResponse({
       customer,

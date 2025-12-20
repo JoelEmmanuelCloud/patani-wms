@@ -101,37 +101,52 @@ export async function DELETE(
       )
     );
 
-    // Find all payments associated with this order
-    const orderPayments = await Payment.find({ order: orderId }).session(session);
-    const totalOrderPayments = orderPayments.reduce((sum, payment) => sum + payment.amount, 0);
-
-    // Delete all payments associated with this order
-    await Payment.deleteMany({ order: orderId }, { session });
-
-    // Update customer balance and stats
-    // - Remove the order balance from customer's balance
-    // - Add back any payments made specifically for this order to the balance
-    // - Decrement total orders and total purchases
-    await Customer.findByIdAndUpdate(
-      order.customer,
-      {
-        $inc: {
-          balance: -order.balance + totalOrderPayments,
-          totalOrders: -1,
-          totalPurchases: -order.total,
-        },
-      },
+    // Unlink payments from this order (keep payment records as history)
+    await Payment.updateMany(
+      { order: orderId },
+      { $unset: { order: '' } },
       { session }
     );
 
     // Delete the order completely
     await Order.findByIdAndDelete(orderId, { session });
 
+    // Recalculate wallet after order deletion
+    // Wallet = Max(0, Total Payments - Total Debt)
+    const customer = await Customer.findById(order.customer).session(session);
+    if (!customer) {
+      throw new Error('Customer not found');
+    }
+
+    const allPayments = await Payment.find({ customer: order.customer }).session(session);
+    const totalPayments = allPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    const allOrders = await Order.find({ customer: order.customer }).session(session);
+    const totalOrderDebt = allOrders.reduce((sum, o) => sum + o.balance, 0);
+
+    const totalDebt = customer.oldBalance + totalOrderDebt;
+    const walletBalance = Math.max(0, totalPayments - totalDebt);
+
+    // Update customer stats and recalculated wallet
+    await Customer.findByIdAndUpdate(
+      order.customer,
+      {
+        $inc: {
+          totalOrders: -1,
+          totalPurchases: -order.total,
+        },
+        $set: {
+          balance: walletBalance, // Set recalculated wallet
+        },
+      },
+      { session }
+    );
+
     await session.commitTransaction();
 
     return successResponse({
       message: 'Order deleted successfully',
-      deletedPayments: orderPayments.length,
+      restoredAmount: order.amountPaid,
       restoredItems: order.items.length
     });
   } catch (error) {

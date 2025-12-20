@@ -11,7 +11,6 @@ export const orderSchema = z.object({
   items: z.array(orderItemSchema).min(1, 'Order must have at least one item'),
   discount: z.number().min(0, 'Discount cannot be negative').default(0),
   tax: z.number().min(0, 'Tax cannot be negative').default(0),
-  amountPaid: z.number().min(0, 'Amount paid cannot be negative').default(0),
   deliveryAddress: z.string().optional(),
   deliveryDate: z.string().or(z.date()).optional(),
   notes: z.string().optional(),

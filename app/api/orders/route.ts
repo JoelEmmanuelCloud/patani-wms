@@ -126,7 +126,17 @@ export async function POST(request: NextRequest) {
     // Calculate order totals
     const subtotal = itemsWithDetails.reduce((sum, item) => sum + item.totalPrice, 0);
     const total = subtotal - validatedData.discount;
-    const balance = total - validatedData.amountPaid;
+
+    // Fetch customer to check wallet balance
+    const customer = await Customer.findById(validatedData.customer).session(session);
+    if (!customer) {
+      throw new Error('Customer not found');
+    }
+
+    // Calculate wallet application (wallet system)
+    const walletBalance = customer.balance; // Current wallet
+    const walletToApply = Math.min(walletBalance, total); // Use wallet up to order total
+    const balance = total - walletToApply;
 
     // Create order
     const [order] = await Order.create(
@@ -139,7 +149,7 @@ export async function POST(request: NextRequest) {
           discount: validatedData.discount,
           tax: 0,
           total,
-          amountPaid: validatedData.amountPaid,
+          amountPaid: walletToApply, // Wallet funds automatically applied
           balance,
           deliveryAddress: validatedData.deliveryAddress,
           deliveryDate: validatedData.deliveryDate,
@@ -161,14 +171,29 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    // Update customer balance and stats
+    // Recalculate wallet after order is created
+    // Wallet = Max(0, Total Payments - Total Debt)
+    const Payment = (await import('@/lib/models/Payment')).default;
+
+    const allPayments = await Payment.find({ customer: validatedData.customer }).session(session);
+    const totalPayments = allPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    const allOrders = await Order.find({ customer: validatedData.customer }).session(session);
+    const totalOrderDebt = allOrders.reduce((sum, o) => sum + o.balance, 0);
+
+    const totalDebt = customer.oldBalance + totalOrderDebt;
+    const walletBalance = Math.max(0, totalPayments - totalDebt);
+
+    // Update customer stats and recalculated wallet
     await Customer.findByIdAndUpdate(
       validatedData.customer,
       {
         $inc: {
-          balance: balance,
           totalOrders: 1,
           totalPurchases: total,
+        },
+        $set: {
+          balance: walletBalance, // Set recalculated wallet
         },
         lastOrderDate: new Date(),
       },

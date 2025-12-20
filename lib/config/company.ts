@@ -4,5 +4,5 @@ export const COMPANY_CONFIG = {
   city: 'Port Harcourt',
   state: 'Rivers State',
   phone: '08064881409, 08165443175',
-  email: 'info@pataniwms.com',
+  email: 'benjaminobi122@gmail.com',
 };
